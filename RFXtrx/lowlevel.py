@@ -2503,10 +2503,12 @@ class Fan(Packet):
         self.id2 = id_combined >> 8 & 0xff
         self.id3 = id_combined & 0xff
         self.cmnd = cmnd
+
+        # Note: there's always a trailing zero in sniffed fan packets
         self.data = bytearray([self.packetlength, self.packettype,
                                self.subtype, self.seqnbr,
                                self.id1, self.id2, self.id3,
-                               self.cmnd, 0x00]) # There's always a trailing zero in sniffed packets
+                               self.cmnd, 0x00])
 
         self._set_strings()
 
@@ -2516,14 +2518,16 @@ class Fan(Packet):
 
         if self.subtype in self.TYPES:
             self.type_string = self.TYPES[self.subtype]
+            cmnds = self.COMMANDS[self.subtype]
         else:
             # Degrade nicely for yet unknown subtypes
             self.type_string = self._UNKNOWN_TYPE.format(self.packettype,
                                                          self.subtype)
+            cmnds = []
 
         if self.cmnd is not None:
-            if self.subtype in self.TYPES and self.cmnd in self.COMMANDS[self.subtype]:
-                self.cmnd_string = self.COMMANDS[self.subtype][self.cmnd]
+            if self.cmnd in cmnds:
+                self.cmnd_string = cmnds[self.cmnd]
             else:
                 self.cmnd_string = self._UNKNOWN_CMND.format(self.cmnd)
 

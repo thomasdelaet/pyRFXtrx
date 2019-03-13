@@ -153,7 +153,6 @@ class FanDevice(RFXtrxDevice):
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)
 
-
     def send_low(self, transport):
         """ Send a 'Low speed' command using the given transport """
 

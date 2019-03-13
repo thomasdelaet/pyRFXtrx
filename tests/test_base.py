@@ -213,6 +213,18 @@ class CoreTestCase(TestCase):
         event.device.send_close(core.transport)
         event.device.send_stop(core.transport)
 
+        #Fan
+        bytes_array = bytearray(b'\x08\x17\x02\x00\x00\x00\x01\x03\x00')
+        event = core.transport.receive(bytes_array)
+        self.assertEquals(RFXtrx.ControlEvent, type(event))
+        self.assertEquals(event.__str__(),"<class 'RFXtrx.ControlEvent'> device=[<class 'RFXtrx.FanDevice'> type='Lucci Air AC' id='000001'] values=[('Command', 'LOW')]")
+        event.device.send_high(core.transport)
+        event.device.send_medium(core.transport)
+        event.device.send_low(core.transport)
+        event.device.send_off(core.transport)
+        event.device.send_onoff(core.transport, True)
+        event.device.send_onoff(core.transport, False)
+
         #Rfy
         bytes_array = bytearray(b'\x08\x1A\x00\x00\x0A\x00\x01\x01\x03')
         event= core.transport.receive(bytes_array)

@@ -52,6 +52,8 @@ def parse(data):
         pkt = Lighting6()
     elif data[1] == 0x16:
         pkt = Chime()
+    elif data[1] == 0x17:
+        pkt = Fan()
     elif data[1] == 0x19:
         pkt = RollerTrol()
     elif data[1] == 0x1A:
@@ -2329,6 +2331,201 @@ class Security1(SensorPacket):
                                                          self.subtype)
         if self.security1_status in self.STATUS:
             self.security1_status_string = self.STATUS[self.security1_status]
+
+###############################################################################
+# Fan class
+###############################################################################
+
+
+class Fan(Packet):
+    """
+    Data class for the Fan packet type
+    """
+    TYPES = {0x00: 'Siemens SF01',
+             0x01: 'ITHO CVE RFT',
+             0x02: 'Lucci Air AC',
+             0x03: 'SEAV TXS4',
+             0x04: 'Westinghouse',
+             0x05: 'Lucci Air DC',
+             0x06: 'Casafan',
+             0x07: 'FT1211R',
+             0x08: 'Falmec',
+             0x09: 'Lucci Air DCII'}
+    """
+    Mapping of numeric subtype values to strings, used in type_string
+    """
+
+    COMMANDS = {
+        # Siemens SF01
+        0x00: {0x01: 'Timer',
+               0x02: '-',
+               0x03: 'Learn',
+               0x04: '+',
+               0x05: 'Confirm',
+               0x06: 'Light'},
+        # ITHO CVE RFT
+        0x01: {0x01: '1',
+               0x02: '2',
+               0x03: '3',
+               0x04: 'Timer',
+               0x05: 'Not at home',
+               0x06: 'Learn',
+               0x07: 'Erase all remotes'},
+        # Lucci Air AC
+        0x02: {0x01: 'HI',
+               0x02: 'MED',
+               0x03: 'LOW',
+               0x04: 'OFF',
+               0x05: 'LIGHT'},
+        # SEAV TXS4
+        0x03: {0x01: 'T1',
+               0x02: 'T2',
+               0x03: 'T3',
+               0x04: 'T4'},
+        # Westinghouse
+        0x04: {0x01: 'HI',
+               0x02: 'MED',
+               0x03: 'LOW',
+               0x04: 'OFF',
+               0x05: 'LIGHT'},
+        # Lucci Air DC
+        0x05: {0x01: 'POWER',
+               0x02: '+',
+               0x03: '-',
+               0x04: 'LIGHT',
+               0x05: 'REVERSE',
+               0x06: 'NATURAL FLOW',
+               0x07: 'PAIR'},
+        # Casafan
+        0x06: {0x01: 'HI',
+               0x02: 'MED',
+               0x03: 'LOW',
+               0x04: 'OFF',
+               0x05: 'LIGHT'},
+        # FT1211R
+        0x07: {0x01: 'POWER',
+               0x02: 'LIGHT',
+               0x03: '1',
+               0x04: '2',
+               0x05: '3',
+               0x06: '4',
+               0x07: '5',
+               0x08: 'F/R',
+               0x09: '1H',
+               0x0a: '4H',
+               0x0b: '8H'},
+        # Falmec
+        0x08: {0x01: 'POWER OFF',
+               0x02: 'Speed 1',
+               0x03: 'Speed 2',
+               0x04: 'Speed 3',
+               0x05: 'Speed 4',
+               0x06: 'Timer 1',
+               0x07: 'Timer 2',
+               0x08: 'Timer 3',
+               0x09: 'Timer 4',
+               0x0a: 'LIGHT ON',
+               0x0b: 'LIGHT OFF'},
+        # Lucci Air DCII
+        0x09: {0x01: 'OFF',
+               0x02: '1',
+               0x03: '2',
+               0x04: '3',
+               0x05: '4',
+               0x06: '5',
+               0x07: '6',
+               0x08: 'LIGHT',
+               0x09: 'REVERSE'}
+    }
+    """
+    Mapping of command numeric values to strings, used for cmnd_string
+    """
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return "Fan [subtype={0}, seqnbr={1}, id={2}, cmnd={3}]" \
+            .format(
+                self.subtype,
+                self.seqnbr,
+                self.id_string,
+                self.cmnd_string
+            )
+
+    def __init__(self):
+        """Constructor"""
+        super(Fan, self).__init__()
+        self.id1 = None
+        self.id2 = None
+        self.id3 = None
+        self.id_combined = None
+        self.cmnd = None
+        self.cmnd_string = None
+
+    def parse_id(self, subtype, id_string):
+        """( a string id into individual components"""
+        try:
+            self.packettype = 0x17
+            self.subtype = subtype
+            self.id_combined = int(id_string[:6], 16)
+            self.id1 = self.id_combined >> 16
+            self.id2 = self.id_combined >> 8 & 0xff
+            self.id3 = self.id_combined & 0xff
+            self._set_strings()
+        except ValueError:
+            raise ValueError("Invalid id_string")
+        if self.id_string != id_string:
+            raise ValueError("Invalid id_string")
+
+    def load_receive(self, data):
+        """Load data from a bytearray"""
+        self.data = data
+        self.packetlength = data[0]
+        self.packettype = data[1]
+        self.subtype = data[2]
+        self.seqnbr = data[3]
+        self.id1 = data[4]
+        self.id2 = data[5]
+        self.id3 = data[6]
+        self.cmnd = data[7]
+        self.id_combined = (self.id1 << 16) + (self.id2 << 8) + self.id3
+        self._set_strings()
+
+    def set_transmit(self, subtype, seqnbr, id_combined, cmnd):
+        """Load data from individual data fields"""
+        self.packetlength = 0x08
+        self.packettype = 0x17
+        self.subtype = subtype
+        self.seqnbr = seqnbr
+        self.id_combined = id_combined
+        self.id1 = id_combined >> 16
+        self.id2 = id_combined >> 8 & 0xff
+        self.id3 = id_combined & 0xff
+        self.cmnd = cmnd
+        self.data = bytearray([self.packetlength, self.packettype,
+                               self.subtype, self.seqnbr,
+                               self.id1, self.id2, self.id3,
+                               self.cmnd, 0x00]) # There's always a trailing zero in sniffed packets
+
+        self._set_strings()
+
+    def _set_strings(self):
+        """Translate loaded numeric values into convenience strings"""
+        self.id_string = "{0:06x}".format(self.id_combined)
+
+        if self.subtype in self.TYPES:
+            self.type_string = self.TYPES[self.subtype]
+        else:
+            # Degrade nicely for yet unknown subtypes
+            self.type_string = self._UNKNOWN_TYPE.format(self.packettype,
+                                                         self.subtype)
+
+        if self.cmnd is not None:
+            if self.subtype in self.TYPES and self.cmnd in self.COMMANDS[self.subtype]:
+                self.cmnd_string = self.COMMANDS[self.subtype][self.cmnd]
+            else:
+                self.cmnd_string = self._UNKNOWN_CMND.format(self.cmnd)
 
 ###############################################################################
 # Rfy class

@@ -111,6 +111,76 @@ class RollerTrolDevice(RFXtrxDevice):
         transport.send(pkt.data)
 
 
+class FanDevice(RFXtrxDevice):
+    """ Concrete class for a fan device """
+    def __init__(self, pkt):
+        super(FanDevice, self).__init__(pkt)
+        if isinstance(pkt, lowlevel.Fan):
+            self.id_combined = pkt.id_combined
+            self.cmndseqnbr = 0
+
+    def send_high(self, transport):
+        """ Send a 'High speed' command using the given transport """
+        pkt = lowlevel.Fan()
+        pkt.set_transmit(
+            self.subtype,
+            self.cmndseqnbr,
+            self.id_combined,
+            0x01 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+        )
+        self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
+        transport.send(pkt.data)
+
+    def send_medium(self, transport):
+        """ Send a 'Medium speed' command using the given transport """
+        pkt = lowlevel.Fan()
+        pkt.set_transmit(
+            self.subtype,
+            self.cmndseqnbr,
+            self.id_combined,
+            0x02 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+        )
+        self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
+        transport.send(pkt.data)
+
+
+    def send_low(self, transport):
+        """ Send a 'Low speed' command using the given transport """
+        pkt = lowlevel.Fan()
+        pkt.set_transmit(
+            self.subtype,
+            self.cmndseqnbr,
+            self.id_combined,
+            0x03 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+        )
+        self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
+        transport.send(pkt.data)
+
+    def send_off(self, transport):
+        """ Send a 'Light on' command """
+        pkt = lowlevel.Fan()
+        pkt.set_transmit(
+            self.subtype,
+            self.cmndseqnbr,
+            self.id_combined,
+            0x04 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+        )
+        self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
+        transport.send(pkt.data)
+
+    def send_onoff(self, transport, turn_on):
+        """ Send a 'Light on' or 'Light off' command """
+        pkt = lowlevel.Fan()
+        pkt.set_transmit(
+            self.subtype,
+            self.cmndseqnbr,
+            self.id_combined,
+            0x05 # TODO: this depends on the subtype, currently only works for Lucci Air AC, which only supports light toggling (no known state)
+        )
+        self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
+        transport.send(pkt.data)
+
+
 class RfyDevice(RFXtrxDevice):
     """ Concrete class for a roller device """
     def __init__(self, pkt):
@@ -332,7 +402,7 @@ class LightingDevice(RFXtrxDevice):
 
 
 ###############################################################################
-# get_devide method
+# get_device method
 ###############################################################################
 
 
@@ -363,6 +433,10 @@ def get_device(packettype, subtype, id_string):
         pkt = lowlevel.Lighting6()
         pkt.parse_id(subtype, id_string)
         return LightingDevice(pkt)
+    if packettype == 0x17:  # Fan
+        pkt = lowlevel.Fan()
+        pkt.parse_id(subtype, id_string)
+        return FanDevice(pkt)
     if packettype == 0x19:  # RollerTrol
         pkt = lowlevel.RollerTrol()
         pkt.parse_id(subtype, id_string)
@@ -482,6 +556,8 @@ class ControlEvent(RFXtrxEvent):
             device = LightingDevice(pkt)
         elif isinstance(pkt, lowlevel.RollerTrol):
             device = RollerTrolDevice(pkt)
+        elif isinstance(pkt, lowlevel.Fan):
+            device = FanDevice(pkt)
         elif isinstance(pkt, lowlevel.Rfy):
             device = RfyDevice(pkt)
         else:

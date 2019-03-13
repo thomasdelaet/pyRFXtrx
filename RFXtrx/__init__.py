@@ -121,24 +121,34 @@ class FanDevice(RFXtrxDevice):
 
     def send_high(self, transport):
         """ Send a 'High speed' command using the given transport """
+
+        # TODO: cmnd depends on the subtype, so this currently only works for
+        # Lucci Air AC type devices (0x02)
+        cmnd = 0x01
+
         pkt = lowlevel.Fan()
         pkt.set_transmit(
             self.subtype,
             self.cmndseqnbr,
             self.id_combined,
-            0x01 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+            cmnd
         )
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)
 
     def send_medium(self, transport):
         """ Send a 'Medium speed' command using the given transport """
+
+        # TODO: cmnd depends on the subtype, so this currently only works for
+        # Lucci Air AC type devices (0x02)
+        cmnd = 0x02
+
         pkt = lowlevel.Fan()
         pkt.set_transmit(
             self.subtype,
             self.cmndseqnbr,
             self.id_combined,
-            0x02 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+            cmnd
         )
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)
@@ -146,36 +156,52 @@ class FanDevice(RFXtrxDevice):
 
     def send_low(self, transport):
         """ Send a 'Low speed' command using the given transport """
+
+        # TODO: cmnd depends on the subtype, so this currently only works for
+        # Lucci Air AC type devices (0x02)
+        cmnd = 0x03
+
         pkt = lowlevel.Fan()
         pkt.set_transmit(
             self.subtype,
             self.cmndseqnbr,
             self.id_combined,
-            0x03 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+            cmnd
         )
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)
 
     def send_off(self, transport):
         """ Send a 'Light on' command """
+
+        # TODO: cmnd depends on the subtype, so this currently only works for
+        # Lucci Air AC type devices (0x02)
+        cmnd = 0x04
+
         pkt = lowlevel.Fan()
         pkt.set_transmit(
             self.subtype,
             self.cmndseqnbr,
             self.id_combined,
-            0x04 # TODO: this depends on the subtype, currently only works for Lucci Air AC
+            cmnd
         )
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)
 
     def send_onoff(self, transport, turn_on):
         """ Send a 'Light on' or 'Light off' command """
+
+        # TODO: cmnd depends on the subtype, so this currently only works for
+        # Lucci Air AC type devices (0x02), which only supports light toggling
+        # (no known state) so turn_on is meaningless here.
+        cmnd = 0x05
+
         pkt = lowlevel.Fan()
         pkt.set_transmit(
             self.subtype,
             self.cmndseqnbr,
             self.id_combined,
-            0x05 # TODO: this depends on the subtype, currently only works for Lucci Air AC, which only supports light toggling (no known state)
+            cmnd
         )
         self.cmndseqnbr = (self.cmndseqnbr + 1) % 5
         transport.send(pkt.data)

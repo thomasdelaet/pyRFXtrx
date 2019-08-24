@@ -35,12 +35,15 @@ def main():
 
     modes_list = sys.argv[2].split() if len(sys.argv) > 2 else None
     print ("modes: ", modes_list)
-    core = RFXtrx.Core(rfxcom_device, print_callback, debug=True, modes=modes_list)
+    conn = RFXtrx.Connect(rfxcom_device, print_callback, debug=True, modes=modes_list)
 
-    print (core)
-    while True:
-        print(core.sensors())
-        time.sleep(2)
+    try:
+        print (conn)
+        while True:
+            print(conn.sensors())
+            time.sleep(2)
+    finally:
+        conn.close_connection()
 
 if __name__ == "__main__":
     try:

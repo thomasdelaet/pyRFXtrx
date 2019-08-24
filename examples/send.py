@@ -18,20 +18,37 @@
 # along with pyRFXtrx.  See the file COPYING.txt in the distribution.
 # If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+sys.path.append("../")
 
-NOT TESTED
+import RFXtrx
+import time
 
+def print_callback(event):
+    print(event)
 
-from RFXtrx.pyserial import PySerialTransport
-from RFXtrx import LightingDevice
-from time import sleep
+def main():
+    if len(sys.argv) >= 2:
+        rfxcom_device = sys.argv[1]
+    else:
+        rfxcom_device = '/dev/serial/by-id/usb-RFXCOM_RFXtrx433_A1Y0NJGR-if00-port0'
 
-transport = PySerialTransport('/dev/cu.usbserial-05VN8GHS', debug=True)
-transport.reset()
+    modes_list = sys.argv[2].split() if len(sys.argv) > 2 else None
+    print ("modes: ", modes_list)
 
-while True:
-    event = transport.receive_blocking()
-    if isinstance(event.device, LightingDevice):
-        sleep(5)
-        event.device.send_off(transport)
-        ack = transport.receive_blocking()
+    conn = RFXtrx.Connect(rfxcom_device, print_callback, debug=True, modes=modes_list)
+    try:
+        print (conn)
+        fan = RFXtrx.get_device(0x17, 0x02, "000000")
+        time.sleep(2)
+        fan.send_medium(conn.transport)
+        time.sleep(10)
+        fan.send_off(conn.transport)
+    finally:
+        conn.close_connection()
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

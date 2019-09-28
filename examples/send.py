@@ -66,7 +66,7 @@ def main():
 
         client.on_message=on_message
 
-        client.loop_start()
+        client.loop_forever()
 
     finally:
         conn.close_connection()

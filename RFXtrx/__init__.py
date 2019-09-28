@@ -727,6 +727,7 @@ class PySerialTransport(RFXtrxTransport):
         """ Open a serial connexion """
         try:
             self.serial = serial.Serial(self.port, 38400, timeout=0.1)
+            print('opening serial connection')
             self.serial.open()
         except serial.serialutil.SerialException:
             import glob

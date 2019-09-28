@@ -23,6 +23,9 @@ sys.path.append("../")
 
 import RFXtrx
 import time
+import paho.mqtt.client as mqtt
+
+broker_address="192.168.3.39"
 
 def print_callback(event):
     print(event)
@@ -31,21 +34,43 @@ def main():
     if len(sys.argv) >= 2:
         rfxcom_device = sys.argv[1]
     else:
-        rfxcom_device = '/dev/serial/by-id/usb-RFXCOM_RFXtrx433_A1Y0NJGR-if00-port0'
+        rfxcom_device = '/dev/serial/by-id/usb-RFXCOM_RFXtrx433XL_DO2ZW4OB-if00-port0'
 
-    modes_list = sys.argv[2].split() if len(sys.argv) > 2 else None
-    print ("modes: ", modes_list)
+    def on_message(client, userdata, message):
+        print('message topic=',message.topic)
+        if message.topic == '/seav_fan/t1':
+            fan.send_high(conn.transport)
+        elif message.topic == '/seav_fan/t2':
+            fan.send_medium(conn.transport)
+        elif message.topic == '/seav_fan/t3':
+            fan.send_low(conn.transport)
+        elif message.topic == '/seav_fan/t4':
+            fan.send_off(conn.transport)
+        time.sleep(3)
 
-    conn = RFXtrx.Connect(rfxcom_device, print_callback, debug=True, modes=modes_list)
     try:
+        conn = RFXtrx.Connect(rfxcom_device, print_callback, debug=True)
+
         print (conn)
-        fan = RFXtrx.get_device(0x17, 0x02, "000000")
-        time.sleep(2)
-        fan.send_medium(conn.transport)
-        time.sleep(10)
-        fan.send_off(conn.transport)
+        fan = RFXtrx.get_device(0x17, 0x03, "005545")
+
+        print('creating new mqtt client instance')
+        client = mqtt.Client("P1")
+        print('connecting to broker')
+        client.connect(broker_address)
+        print('subscribing to topics')
+        client.subscribe('/seav_fan/t1')
+        client.subscribe('/seav_fan/t2')
+        client.subscribe('/seav_fan/t3')
+        client.subscribe('/seav_fan/t4')
+
+        client.on_message=on_message
+
+        client.loop_start()
+
     finally:
         conn.close_connection()
+        client.loop_stop()
 
 if __name__ == "__main__":
     try:

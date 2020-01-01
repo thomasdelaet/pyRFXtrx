@@ -36,11 +36,11 @@ try:
 
     if sys.argv[1] == '1':
         fan.send_high(conn.transport)
-    elif sys.argv[2] == '2':
+    elif sys.argv[1] == '2':
         fan.send_medium(conn.transport)
-    elif sys.argv[3] == '3':
+    elif sys.argv[1] == '3':
         fan.send_low(conn.transport)
-    elif sys.argv[4] == '4':
+    elif sys.argv[1] == '4':
         fan.send_off(conn.transport)
 
     time.sleep(3)

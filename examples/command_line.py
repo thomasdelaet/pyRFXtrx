@@ -34,16 +34,20 @@ try:
     print (conn)
     fan = RFXtrx.get_device(0x17, 0x03, "005545")
 
-    if sys.argv[1] == '1':
-        fan.send_high(conn.transport)
-    elif sys.argv[1] == '2':
-        fan.send_medium(conn.transport)
-    elif sys.argv[1] == '3':
-        fan.send_low(conn.transport)
-    elif sys.argv[1] == '4':
-        fan.send_off(conn.transport)
-
-    time.sleep(3)
-
+    while True:
+        line = sys.stdin.readline()
+        if not line:
+            break
+        if line.startswith('/seav_fan/t'):
+            command = line.lstrip('/seav_fan/t')[0]
+        if command == '1':
+            fan.send_high(conn.transport)
+        elif command == '2':
+            fan.send_medium(conn.transport)
+        elif command == '3':
+            fan.send_low(conn.transport)
+        elif command == '4':
+            fan.send_off(conn.transport)
+        time.sleep(3)
 finally:
     conn.close_connection()
